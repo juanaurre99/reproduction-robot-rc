@@ -14,12 +14,23 @@ class ReservoirComputing:
         self.washup_length = washup_length
         self.ridge_beta = ridge_beta
 
-    def compute_reservoir_state(self, u, r=None):
-        if r is None:
-            r = self.r_zero.copy()
+        # New: Internal state
+        self.reservoir_state = self.r_zero.copy()
+
+    def reset_state(self, r_init=None):
+        """Reset the internal reservoir state."""
+        if r_init is None:
+            self.reservoir_state = self.r_zero.copy()
+        else:
+            self.reservoir_state = r_init.copy()
+
+    def compute_reservoir_state(self, u):
+        r = self.reservoir_state
         r_next = (1 - self.alpha) * r + self.alpha * np.tanh(
             self.reservoir_layer @ r + self.input_layer @ u + self.kb * np.ones(self.n)
         )
+        # Update internal state
+        self.reservoir_state = r_next
         return r_next
 
     def _reservoir_output_transform(self, r):
@@ -27,25 +38,36 @@ class ReservoirComputing:
         r_out[1::2] = r_out[1::2] ** 2
         return r_out
 
-    def step(self, u, r=None):
-        if r is None:
-            r = self.r_zero.copy()
-        r_next = self.compute_reservoir_state(u, r)
+    def step(self, u):
+        r_next = self.compute_reservoir_state(u)
         r_out = self._reservoir_output_transform(r_next)
         y = None if self.output_layer is None else self.output_layer @ r_out
-        return y, r_next
+        return y
 
     def fit(self, train_x, train_y):
         n, train_length = self.n, train_x.shape[1]
         wash = self.washup_length
         beta = self.ridge_beta
         r_all = np.zeros((n, train_length + 1))
+        # TEMPORARILY reset state for training
+        old_state = self.reservoir_state.copy()
+        self.reservoir_state = self.r_zero.copy()
         for ti in range(train_length):
-            r_all[:, ti + 1] = self.compute_reservoir_state(train_x[:, ti], r_all[:, ti])
+            r_all[:, ti + 1] = (
+                (1 - self.alpha) * r_all[:, ti] +
+                self.alpha * np.tanh(
+                    self.reservoir_layer @ r_all[:, ti] +
+                    self.input_layer @ train_x[:, ti] +
+                    self.kb * np.ones(self.n)
+                )
+            )
         r_out = r_all[:, wash + 1:]  # (n, train_length - washup)
         r_out = self._reservoir_output_transform(r_out)
         y_train = train_y[:, wash:]  # (output_dim, train_length - washup)
         RR = r_out @ r_out.T + beta * np.eye(n)
         self.output_layer = y_train @ r_out.T @ np.linalg.inv(RR)
         self.r_zero = r_all[:, -1].copy()
+        self.reservoir_state = self.r_zero.copy()
+        # Restore state if needed (could also leave at reset)
+        # self.reservoir_state = old_state
         return self.output_layer
