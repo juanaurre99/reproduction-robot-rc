@@ -38,7 +38,7 @@ class ReservoirComputing:
         r_out[1::2] = r_out[1::2] ** 2
         return r_out
 
-    def step(self, u):
+    def predict(self, u):
         r_next = self.compute_reservoir_state(u)
         r_out = self._reservoir_output_transform(r_next)
         y = None if self.output_layer is None else self.output_layer @ r_out
@@ -71,3 +71,26 @@ class ReservoirComputing:
         # Restore state if needed (could also leave at reset)
         # self.reservoir_state = old_state
         return self.output_layer
+
+    def set_hp(self, spectral_radius=None, input_scaling=None, alpha=None, kb=None, ridge_beta=None):
+        if alpha is not None:
+            self.alpha = alpha
+        if kb is not None:
+            self.kb = kb
+        if ridge_beta is not None:
+            self.ridge_beta = ridge_beta
+
+        # Only rescale, don't rebuild matrix (sparsity/k not changed)
+        if spectral_radius is not None:
+            eigvals = np.linalg.eigvals(self.reservoir_layer)
+            current_radius = np.max(np.abs(eigvals))
+            if current_radius > 0:
+                self.reservoir_layer *= spectral_radius / current_radius
+
+        if input_scaling is not None:
+            norm = np.linalg.norm(self.input_layer)
+            if norm > 0:
+                self.input_layer *= input_scaling / norm
+
+        # Always reset state after changing structure/hyperparameters
+        self.reservoir_state = self.r_zero.copy()

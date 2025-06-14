@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
-from control_loop import *
+from control import *
 from robot import TwoLinkRobot
 from rc import ReservoirComputing
 from utils import *

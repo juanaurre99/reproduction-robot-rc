@@ -64,13 +64,12 @@ def control_loop(
     ])
 
     for t_i in range(T - 3):
-        predict_value = rc.step(u)
+        predict_value = rc.predict(u)
         if predict_value is None or predict_value.shape != (2,):
             raise RuntimeError(f"Reservoir output error at t={t_i}")
 
         predict_value = predict_value.copy()
         predict_value += predict_value * disturbance_failure[:, t_i]
-
         time_li = 0 if t_i == 0 else t_i - 1
         for li in range(2):
             diff = predict_value[li] - tau_pred[time_li, li]
