@@ -11,7 +11,7 @@ main_matfile = 'all_traj_06112025_341_7413.mat'  # Adjust path as needed
 params = scipy.io.loadmat(main_matfile, struct_as_record=False, squeeze_me=True)
 
 
-traj_name= "astroid"
+traj_name= "lorenz"
 
 def mat_struct_to_dict(mat_struct):
     if hasattr(mat_struct, '_fieldnames'):
@@ -43,7 +43,7 @@ Wout = params['Wout']
 properties = params['properties']
 m1, m2, l1, l2, lc1, lc2, I1, I2 = properties
 
-trajectory, q_control, qdt_control, val_length, x_control, y_control = load_validation_trajectory("astroid")
+trajectory, q_control, qdt_control, val_length, x_control, y_control = load_validation_trajectory(traj_name)
 
 
 # ---- Training data (from .mat) ----
@@ -77,7 +77,7 @@ rc = ReservoirComputing(
 )
 
 # ----------- 3. Train RC (if not loaded) -----------
-rc.fit(train_x, train_y)
+#rc.fit(train_x, train_y)
 
 # ----------- 4. Define the control_loop function (paste from above or import) -----------
 
