@@ -105,4 +105,5 @@ def control_loop(
         if verbose and t_i == T - 4:
             print("Last iter:", predict_value, q_pred[time_now + 1, :], qdt_pred[time_now + 1, :])
 
-    return data_pred[:T, :]
+    return data_pred[:T, :], q_pred[:T+1, :]
+
