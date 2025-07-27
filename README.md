@@ -43,7 +43,7 @@ Below is an example of a tracked trajectory (e.g. Lorenz) compared to the ground
 
 ![Example Trajectory Plot](trajectory_plot.png)
 
-> Make sure to save your plot as `example_plot.png` in the project root or update the filename accordingly.
+
 
 ---
 
